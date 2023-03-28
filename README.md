@@ -2,7 +2,7 @@
 
 ## Quantizing & Compiling TRT_Pose model with Vitis-AI
 
-1. Download pretrained model from [trt_pose github](https://github.com/NVIDIA-AI-IOT/trt_pose) $\rarr$ https://drive.google.com/open?id=1XYDdCUdiF2xxx4rznmLb62SdOUZuoNbd
+1. Download pretrained model from [trt_pose github](https://github.com/NVIDIA-AI-IOT/trt_pose) &rarr; https://drive.google.com/open?id=1XYDdCUdiF2xxx4rznmLb62SdOUZuoNbd
 
 2. Download COCO validation dataset, 2017 with keypoints annotations
     
