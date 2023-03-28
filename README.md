@@ -2,6 +2,10 @@
 
 ## Quantizing & Compiling TRT_Pose model with Vitis-AI
 
+```
+NOTE: all these steps should be performed inside a Vitis-AI Pytorch container or with Vitis-AI installed locally 
+```
+Vitis-AI image used for this work: https://hub.docker.com/r/xilinx/vitis-ai-pytorch-cpu
 1. Download pretrained model from [trt_pose github](https://github.com/NVIDIA-AI-IOT/trt_pose) &rarr; https://drive.google.com/open?id=1XYDdCUdiF2xxx4rznmLb62SdOUZuoNbd
 
 2. Download COCO validation dataset, 2017 with keypoints annotations
