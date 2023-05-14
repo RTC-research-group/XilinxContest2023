@@ -1,5 +1,14 @@
 # [Xilinx Contest 2023](http://www.openhw.eu/)
 
+## TUTORIAL MNIST
+
+En la carpeta MNIST_ALVEO se encuentra el tutorial MNIST.
+Sus scripts han sido MODIFICADOS para funcionar con la Alveo U280.
+
+Si venimos de una instalación limpia, debemos configurar la máquina host siguiendo este tutorial: https://github.com/Xilinx/Vitis-AI/tree/1.4.1/setup/alveo
+Básicamente, solo debemos hacer source del fichero install.sh de dicho tutorial.
+Debemos instalar Vitis 1.4, ya que dicho Tutorial sólo funciona con dicha versión: ```docker pull xilinx/vitis-ai:1.4.1.978```
+
 ## Quantizing & Compiling TRT_Pose model with Vitis-AI
 
 ```

@@ -1,0 +1,15 @@
+
+------------------------------------
+Keras version      :  2.2.4-tf
+TensorFlow version :  1.15.2
+3.6.13 | packaged by conda-forge | (default, Sep 23 2021, 07:56:31) 
+[GCC 9.4.0]
+------------------------------------
+Command line options:
+ --graph      :  ./build/freeze/frozen_graph.pb
+ --input_node :  images_in
+ --output_node:  flatten/Reshape
+ --gpu        :  0
+------------------------------------
+
+Graph accuracy: 97.90 %

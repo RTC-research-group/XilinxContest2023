@@ -1,0 +1,21 @@
+[INFO] Namespace(batchsize=1, inputs_shape=None, layout='NHWC', model_files=['./build/quantize/quantize_eval_model.pb'], model_type='tensorflow', named_inputs_shape=None, out_filename='/tmp/customcnn_DPUCAHX8H_ISA2_org.xmodel', proto=None)
+[INFO] tensorflow model: /workspace/build/quantize/quantize_eval_model.pb
+[INFO] parse raw model     :  0%|          | 0/18 [00:00<?, ?it/s]                           [INFO] parse raw model     :100%|██████████| 18/18 [00:00<00:00, 7486.86it/s]                
+[INFO] infer shape (NHWC)  :  0%|          | 0/30 [00:00<?, ?it/s]                           [INFO] infer shape (NHWC)  :100%|██████████| 30/30 [00:00<00:00, 28715.00it/s]               
+[INFO] perform level-0 opt :  0%|          | 0/3 [00:00<?, ?it/s]                            [INFO] perform level-0 opt :100%|██████████| 3/3 [00:00<00:00, 4161.02it/s]                  
+[INFO] perform level-1 opt :  0%|          | 0/7 [00:00<?, ?it/s]                            [INFO] perform level-1 opt :100%|██████████| 7/7 [00:00<00:00, 4260.65it/s]                  
+[INFO] generate xmodel     :  0%|          | 0/16 [00:00<?, ?it/s]                           [INFO] generate xmodel     :100%|██████████| 16/16 [00:00<00:00, 3856.17it/s]                
+[INFO] dump xmodel ...[INFO] dump xmodel: /tmp/customcnn_DPUCAHX8H_ISA2_org.xmodel
+[UNILOG][INFO] Compile mode: dpu
+[UNILOG][INFO] Debug mode: function
+[UNILOG][INFO] Target architecture: DPUCAHX8H_ISA2
+[UNILOG][INFO] Graph name: quantize_eval_model, with op num: 32
+[UNILOG][INFO] Begin to compile...
+[UNILOG][INFO] Total device subgraph number 3, DPU subgraph number 1
+[UNILOG][INFO] Compile done.
+[UNILOG][INFO] The meta json is saved to "/workspace/./build/compile_u50/meta.json"
+[UNILOG][INFO] The compiled xmodel is saved to "/workspace/./build/compile_u50/customcnn.xmodel"
+[UNILOG][INFO] The compiled xmodel's md5sum is e1e87b9a147a79da5ba1668c6ea9dd3d, and has been saved to "/workspace/./build/compile_u50/md5sum.txt"
+**************************************************
+* VITIS_AI Compilation - Xilinx Inc.
+**************************************************
