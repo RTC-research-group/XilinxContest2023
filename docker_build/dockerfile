@@ -1,0 +1,16 @@
+FROM nvidia/cuda12.1.1-cudnn8-devel-ubuntu22.04
+
+FROM xilinx/vitis-ai-pytorch-cpu:latest
+
+
+
+ENV PATH=/opt/vitis_ai/conda/bin:$PATH
+
+
+
+COPY install_reqs.sh /workspace/install_reqs.sh
+RUN /workspace/install_reqs.sh
+
+RUN  echo "conda activate vitis-ai-pytorch" >> /root/.bashrc
+RUN  echo "conda activate vitis-ai-pytorch" >> /home/vitis-ai-user/.bashrc
+
