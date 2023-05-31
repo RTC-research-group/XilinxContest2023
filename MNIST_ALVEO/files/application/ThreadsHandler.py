@@ -24,8 +24,8 @@ class DisplayThread (threading.Thread):
         pass
 
     def run(self):
-        busySlot = self.handler.getFirstBusySlot()
         while True:
+            busySlot = self.handler.getFirstBusySlot()
             self.handler.outputWrittenEvents[busySlot].wait()
 
             batch = self.handler.outputBatchesQueue[busySlot]
