@@ -26,7 +26,7 @@ class DisplayThread (threading.Thread):
     def run(self):
         busySlot = self.handler.getFirstBusySlot()
         while True:
-            self.handler.outputWrittenLockQueue[busySlot].acquire()
+            self.handler.outputWrittenEvents[busySlot].wait()
 
             batch = self.handler.outputBatchesQueue[busySlot]
             self.display(batch)
@@ -47,10 +47,8 @@ class ThreadsHandler:
         self.outputBatchesQueue = [None] * maxNumThreads
 
 
-        self.outputWrittenLockQueue = [threading.Lock()] * maxNumThreads
-        for lock in self.outputWrittenLockQueue:
-            lock.acquire()
-
+        self.outputWrittenEvents = [threading.Event()] * maxNumThreads
+        self.queuesAreJustNotFullEvent = threading.Event()
         self.lock = threading.Lock()
 
     def getFirstBusySlot(self):
@@ -79,14 +77,14 @@ class ThreadsHandler:
         self.lock.acquire()
         # We write the batch:
         self.outputBatchesQueue[slot] = batch
-        self.outputWrittenLockQueue[slot].release()
+        self.outputWrittenEvents[slot].set()
         # We free the handler:
         self.lock.release()
 
     def allocateSlot(self, inputBatch, waitForSpace=True):
         if waitForSpace:
-            while self.areQueuesFull(blocking=True):
-                sleep(10)
+            if self.areQueuesFull(blocking=True):
+                self.queuesAreJustNotFullEvent.wait()
 
         self.lock.acquire()
         # self.runningThreadsSemaphore.acquire()
@@ -120,7 +118,12 @@ class ThreadsHandler:
         else:
             self.firstBusySlot = self.firstBusySlot + 1
         # self.runningThreadsSemaphore.release()
+
+        if self.numRunningThreads == (self.maxNumThreads - 1):
+            self.queuesAreJustNotFullEvent.set()
+
         self.lock.release()
+
 
         return slot
 
