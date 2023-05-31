@@ -40,7 +40,6 @@ class ThreadsHandler:
         self.firstBusySlot = 0
         self.firstEmptySlot = 0
         # self.numRunningThreads = 0
-        self.runningThreadsSemaphore = threading.Semaphore(maxNumThreads)
 
         self.threadsQueue = [None] * maxNumThreads
         self.inputBatchesQueue = [None] * maxNumThreads
@@ -49,6 +48,8 @@ class ThreadsHandler:
 
         self.outputWrittenEvents = [threading.Event()] * maxNumThreads
         self.queuesAreJustNotFullEvent = threading.Event()
+        # self.runningThreadsSemaphore = threading.Semaphore(maxNumThreads)
+
         self.lock = threading.Lock()
 
     def getFirstBusySlot(self):
@@ -121,6 +122,8 @@ class ThreadsHandler:
 
         if self.numRunningThreads == (self.maxNumThreads - 1):
             self.queuesAreJustNotFullEvent.set()
+
+        self.outputWrittenEvents[slot].clear()
 
         self.lock.release()
 
