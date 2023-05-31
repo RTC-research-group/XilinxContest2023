@@ -1,27 +1,56 @@
 import threading
-from time import sleep
+from time import sleep, time
+import cv2
+import torchvision
+from PIL import Image
+import numpy as np
 
+import vart
+import xir
+
+from Processing import preprocessingTransforms, get_child_subgraph_dpu, runDPU, postProcessing
 
 class RunningThread (threading.Thread):
-    def __init__(self, handler, slot: int):
+    def __init__(self, handler, slot: int, inputBatch, dpuRunner):
         threading.Thread.__init__(self)
         self.handler = handler
         self.slot = slot
+        self.dpuRunner = dpuRunner
+        self.inputBatch = inputBatch
 
     def run(self):
-        inputBatch = self.handler.readInputBatch(self.slot)
         outputBatch = None
-        # ...
+
+        # Pre-processing:
+        inputBatch = preprocessingTransforms(self.inputBatch)
+
+        # DPU processing:
+        middleBatch = runDPU(inputBatch, self.dpuRunner)
+
+        # Post-processing:
+        outputBatch = postProcessing(middleBatch, self.inputBatch)
+
         self.handler.writeOutputBatch(self.slot, outputBatch)
 
 class DisplayThread (threading.Thread):
-    def __init__(self, handler):
+    def __init__(self, handler, targetFPS = 24):
         threading.Thread.__init__(self)
         self.handler = handler
+        self.targetFPS = targetFPS
+        self.lastTimestamp = round(time.time() * 1000)
 
     def display(self, batch):
-        # ...
-        pass
+        targetPeriod = (1.0 / float(self.targetFPS)) * 1000.0
+        for k in range(0, batch.shape[0]):
+            currentTimestamp = round(time.time() * 1000)
+            diff = currentTimestamp - self.lastTimestamp
+
+            waitTime = 0 if diff >= targetPeriod else targetPeriod - diff
+            if waitTime > 0:
+                sleep(waitTime)
+
+            cv2.imshow("Output", batch[k])
+            self.lastTimestamp = round(time.time() * 1000)
 
     def run(self):
         while True:
@@ -35,14 +64,13 @@ class DisplayThread (threading.Thread):
 
 
 class ThreadsHandler:
-    def __init__(self, maxNumThreads: int):
+    def __init__(self, maxNumThreads: int, model):
         self.maxNumThreads = maxNumThreads
         self.firstBusySlot = 0
         self.firstEmptySlot = 0
-        # self.numRunningThreads = 0
+        self.numRunningThreads = 0
 
         self.threadsQueue = [None] * maxNumThreads
-        self.inputBatchesQueue = [None] * maxNumThreads
         self.outputBatchesQueue = [None] * maxNumThreads
 
 
@@ -51,6 +79,12 @@ class ThreadsHandler:
         # self.runningThreadsSemaphore = threading.Semaphore(maxNumThreads)
 
         self.lock = threading.Lock()
+
+        g = xir.Graph.deserialize(model)
+        subgraphs = get_child_subgraph_dpu(g)
+        self.dpuRunners = []
+        for i in range(maxNumThreads):
+            self.dpuRunners.append(vart.Runner.create_runner(subgraphs[0], "run"))
 
     def getFirstBusySlot(self):
         self.lock.acquire()
@@ -63,15 +97,6 @@ class ThreadsHandler:
         res = self.firstEmptySlot
         self.lock.release()
         return res
-
-    def readInputBatch(self, slot):
-        # We reserve the handler:
-        self.lock.acquire()
-        # We read the batch:
-        batch = self.inputBatchesQueue[slot]
-        # We free the handler:
-        self.lock.release()
-        return batch
 
     def writeOutputBatch(self, slot, batch):
         # We reserve the handler:
@@ -92,8 +117,7 @@ class ThreadsHandler:
         if not waitForSpace:
             assert self.areQueuesFull(blocking=False)
         slot = self.firstEmptySlot
-        self.threadsQueue[slot] = RunningThread(slot)
-        self.inputBatchesQueue[slot] = inputBatch
+        self.threadsQueue[slot] = RunningThread(slot, inputBatch, self.dpuRunners[slot])
         self.outputBatchesQueue[slot] = None
         self.numRunningThreads = self.numRunningThreads + 1
         if self.firstEmptySlot >= self.maxNumThreads:
@@ -112,7 +136,6 @@ class ThreadsHandler:
         slot = self.firstBusySlot
         self.threadsQueue[slot].join()
         self.threadsQueue[slot] = None
-        self.inputBatchesQueue[slot] = None
         self.numRunningThreads = self.numRunningThreads - 1
         if self.firstBusySlot >= self.maxNumThreads:
             self.firstBusySlot = 0
