@@ -1,6 +1,8 @@
 #!/bin/bash
 # Copyright 2022 Xilinx Inc.
 
+
+
 confirm() {
   echo -en "\n\nDo you agree to the terms and wish to proceed [y/n]? "
   read REPLY
@@ -12,15 +14,16 @@ confirm() {
     REPLY=''
 }
 
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Usage: $0 <image>"
-    exit 2
-fi
+# if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+#     echo "Usage: $0 <image>"
+#     exit 2
+# fi
 
-if [ -z "$1" ]; then
-   echo "Usage: $0 <Vitis_AI_DOCKER_NAME>"
-   exit 2
-fi
+# if [ -z "$1" ]; then
+#    echo "Usage: $0 <Vitis_AI_DOCKER_NAME>"
+#    exit 2
+# fi
+
 
 
 HERE=$(pwd -P) # Absolute path of current directory
@@ -35,7 +38,7 @@ VERSION=latest
 
 CPU_IMAGE_TAG=${DOCKER_REPO}${BRAND}-cpu:${VERSION}
 GPU_IMAGE_TAG=${DOCKER_REPO}${BRAND}-gpu:${VERSION}
-IMAGE_NAME="$1"
+IMAGE_NAME="drallert/vitis-ai-xcontest2023:2.0"
 DEFAULT_COMMAND="bash"
 
 if [[ $# -gt 0 ]]; then
@@ -99,8 +102,6 @@ docker_run_params=$(cat <<-END
     -e USER=$user -e UID=$uid -e GID=$gid \
     -v $DOCKER_RUN_DIR:/vitis_ai_home \
     -v $HERE:/workspace \
-    -v /home/enrique/Trabajo/Tesis:/Tesis -v /home/enrique/:/enrique -v /home/enrique/Trabajo/Vitis_AI/dataset_coco:/dataset_coco \
-    -v /home/enrique/Trabajo:/Trabajo \
     -w /workspace \
     --rm \
     --network=host \
@@ -150,7 +151,7 @@ prompt_file="./docker/dockerfiles/PROMPT/PROMPT_${arch}.txt"
 fi
 
 touch .confirm 
-docker pull $IMAGE_NAME 
+#docker pull $IMAGE_NAME 
 if [[ $IMAGE_NAME == *"gpu"* ]]; then
   docker run \
     $docker_devices \
