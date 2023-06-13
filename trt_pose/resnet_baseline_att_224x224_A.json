@@ -1,7 +1,7 @@
 {
     "train_dataset": {
         "images_dir": "train2017",
-        "annotations_file": "vitis/calib_dataset/annotations_trainval2017/annotations/person_keypoints_train2017_modified.json",
+        "annotations_file": "trt_pose/preprocess_coco/annotations/person_keypoints_train2017_modified.json",
         "category_name": "person",
         "image_shape": [224, 224],
         "target_shape": [56, 56],
@@ -21,8 +21,8 @@
         "hue": 0.01
     },
     "test_dataset": {
-        "images_dir": "vitis/calib_dataset/val2017",
-        "annotations_file": "vitis/calib_dataset/annotations_trainval2017/annotations/person_keypoints_val2017_modified.json",
+        "images_dir": "trt_pose/preprocess_coco/val2017",
+        "annotations_file": "trt_pose/preprocess_coco/annotations/person_keypoints_val2017_modified.json",
         "category_name": "person",
         "image_shape": [224, 224],
         "target_shape": [56, 56],
