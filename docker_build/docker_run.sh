@@ -38,7 +38,7 @@ VERSION=latest
 
 CPU_IMAGE_TAG=${DOCKER_REPO}${BRAND}-cpu:${VERSION}
 GPU_IMAGE_TAG=${DOCKER_REPO}${BRAND}-gpu:${VERSION}
-IMAGE_NAME="drallert/vitis-ai-xcontest2023:2.0"
+IMAGE_NAME="drallert/vitis-ai-xcontest2023:2.1"
 DEFAULT_COMMAND="bash"
 
 if [[ $# -gt 0 ]]; then
