@@ -1,7 +1,4 @@
 #!/bin/bash
-#$1 -- data_config
-#$2 -- model_dir
 
-
-python3 vitis/quantize_trt_pose.py --model_dir $2 --quant_mode test --batch_size 1 --deploy \
-                                    --data_config $1
+python3 quantize/quantize_trt_pose.py --model_dir 'trt_pose/model/resnet18_baseline_att_224x224_A_epoch_249.pth' --quant_mode test --batch_size 1 --deploy \
+                                    --data_config 'trt_pose/resnet_baseline_att_224x224_A.json'
