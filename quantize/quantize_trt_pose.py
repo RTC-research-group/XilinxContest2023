@@ -37,6 +37,7 @@ def create_data_loaders(config):
         evaluator = CocoHumanPoseEval(**config['evaluation'])
     
     # train_dataset = CocoDataset(**train_dataset_kwargs)
+
     test_dataset = CocoDataset(**test_dataset_kwargs)
     
     part_type_counts = test_dataset.get_part_type_counts().float().cpu()
@@ -93,7 +94,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument(
     '--data_config',
-    default="/trt_pose/tasks/human_pose/experiments/resnet18_baseline_att_224x224_A.json",
+    default="./trt_pose/resnet_baseline_att_224x224_A.json",
    # help='Data set directory, when quant_mode=calib, it is for calibration, while quant_mode=test it is for evaluation'
 )
 parser.add_argument(
@@ -320,7 +321,7 @@ def quantization(title='optimize',
     ## new api
     ####################################################################################
     quantizer = torch_quantizer(
-        quant_mode, model, (input), device=device, quant_config_file=config_file)
+        quant_mode, model, (input), device=device)#quant_config_file=config_file)
 
     quant_model = quantizer.quant_model
     #####################################################################################
@@ -372,7 +373,7 @@ def quantization(title='optimize',
     quantizer.export_quant_config()
   if deploy:
     quantizer.export_xmodel(deploy_check=False)
-    quantizer.export_onnx_model()
+ #   quantizer.export_onnx_model()
 
 
 if __name__ == '__main__':
