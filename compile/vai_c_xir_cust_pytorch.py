@@ -101,7 +101,7 @@ class VAI_XIR_Frontend():
 
     if 'target' in param or 'fingerprint' in param:
       import sys
-      sys.path.append('/opt/vitis_ai/conda/envs/vitis-ai-pytorch/lib/python3.7/site-packages/vaic')
+      sys.path.append('/opt/vitis_ai/conda/envs/vitis-ai-pytorch/lib/python3.6/site-packages/vaic')
       from xcompiler_interface import xcompiler
       self.c = xcompiler(param)
       self.frontend = 'xcompiler'
