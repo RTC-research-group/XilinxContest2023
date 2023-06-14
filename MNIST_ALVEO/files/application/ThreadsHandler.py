@@ -1,12 +1,6 @@
 import threading
 from time import sleep, time
 import cv2
-import torchvision
-from PIL import Image
-import numpy as np
-
-import vart
-import xir
 
 from Processing import preprocessingTransforms, get_child_subgraph_dpu, runDPU, postProcessing
 
