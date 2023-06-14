@@ -50,6 +50,7 @@ class DisplayThread (threading.Thread):
                 sleep(waitTime)
 
             cv2.imshow("Output", batch[k])
+            cv2.waitKey(targetPeriod)
             self.lastTimestamp = round(time.time() * 1000)
 
     def run(self):

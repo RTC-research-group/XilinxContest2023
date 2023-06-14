@@ -13,7 +13,10 @@ preprocessingTransforms = torchvision.transforms.Compose([
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
 
-poseTargetCategory = None # ... es un diccionario que no sé cómo se rellena. Lo suyo es poner una persona como categoría:
+poseTargetCategory = {"supercategory": "person",
+                      "id": 1,
+                      "name": "person",
+                      "keypoints": ["nose", "left_eye", "right_eye", "left_ear", "right_ear", "left_shoulder", "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist", "left_hip", "right_hip", "left_knee", "right_knee", "left_ankle", "right_ankle", "neck"], "skeleton": [[16, 14], [14, 12], [17, 15], [15, 13], [12, 13], [6, 8], [7, 9], [8, 10], [9, 11], [2, 3], [1, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [18, 1], [18, 6], [18, 7], [18, 12], [18, 13]]}
 '''
  with open(annotations_file, 'r') as f:
             data = json.load(f)
