@@ -13,6 +13,8 @@ echo `which python`
 cd /
 git clone https://github.com/RTC-research-group/XilinxContest2023
 git clone https://github.com/NVIDIA-AI-IOT/trt_pose
+cd XilinxContest2023 && git pull && chmod +x quantize/quantize_trt_pose_command.sh
+chown -R vitis-ai-user .
 #ls -la /
 #ls -la /trt_pose
 cd /trt_pose
