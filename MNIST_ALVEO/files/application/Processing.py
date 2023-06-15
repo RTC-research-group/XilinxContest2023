@@ -38,8 +38,8 @@ num_links = len(poseTargetCategory['skeleton'])
 topology = coco_category_to_topology(poseTargetCategory)
 
 # https://github.com/Hematies/trt_pose/blob/master/trt_pose/parse_objects.py#L4
-postProcessing = ParseObjects(topology, cmap_threshold=0.1, link_threshold=0.1, cmap_window=5, line_integral_samples=7,
-                             max_num_parts=100, max_num_objects=100)
+postProcessing = ParseObjects(topology)
+# postProcessing = ParseObjects(topology, line_integral_samples=100, link_threshold=0.000001)
 
 # https://github.com/Hematies/trt_pose/blob/master/trt_pose/draw_objects.py
 drawing = DrawObjects(topology)
@@ -48,7 +48,7 @@ def postProcessBatch(batch, originalImgs):
     res = []
     cmaps, pafs = batch
     for k in range(batch[0].size(dim=0)):
-        object_counts, objects, peaks = postProcessing(cmaps[k][None,:], pafs[None,:])
+        object_counts, objects, peaks = postProcessing(cmaps[k][None,:], pafs[k][None,:])
         im = np.array(originalImgs[k])
         drawing(im, object_counts, objects, peaks)
         res.append(im)
