@@ -13,7 +13,7 @@ class ParseObjects(object):
         self.max_num_objects = max_num_objects
     
     def __call__(self, cmap, paf):
-        
+
         peak_counts, peaks = trt_pose.plugins.find_peaks(cmap, self.cmap_threshold, self.cmap_window, self.max_num_parts)
         normalized_peaks = trt_pose.plugins.refine_peaks(peak_counts, peaks, cmap, self.cmap_window)
         score_graph = trt_pose.plugins.paf_score_graph(paf, self.topology, peak_counts, normalized_peaks, self.line_integral_samples)

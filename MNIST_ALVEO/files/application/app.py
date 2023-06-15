@@ -13,7 +13,7 @@ def app(source: str, threads: int, modelFile: str, targetFPS: int, batchSize: in
 
     # 3) A VideoCapture is initialized:
     if(source[0].isdigit() and len(source) == 1):
-        cameraId = source - '0'
+        cameraId = int(source)
         video = cv2.VideoCapture(cameraId)
     else:
         video = cv2.VideoCapture(source)
@@ -58,14 +58,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('-s', '--source', type=str, default='0', help='Input video device ID or path to video. Default is 0 (webcam)')
     ap.add_argument('-t', '--threads', type=int, default=1, help='Number of threads. Default is 1')
-    ap.add_argument('-m', '--model', type=str, default='compiled_pytorch_xmodel/Sequential_int.xmodel',
-                    help='Path of xmodel. Default is compiled_pytorch_xmodel/Sequential_int.xmodel')
+    # ap.add_argument('-m', '--model', type=str, default='../../../vitis/compiled_pytorch_xmodel/Sequential_int.xmodel',
+    #                help='Path of xmodel. Default is ../../../vitis/compiled_pytorch_xmodel/Sequential_int.xmodel')
+    ap.add_argument('-m', '--model', type=str, default='../../../trt_pose/models/resnet18_baseline_att_224x224_A_epoch_249.pth',
+                    help='Path of xmodel. Default is ../../../trt_pose/models/resnet18_baseline_att_224x224_A_epoch_249.pth')
+
     ap.add_argument('-f', '--fps', type=int, default=24, help='Target FPS. Default is 24')
 
     args = ap.parse_args()
 
     print('Command line options:')
-    print(' --source : ', args.image_dir)
+    print(' --source : ', args.source)
     print(' --threads   : ', args.threads)
     print(' --model     : ', args.model)
     print(' --fps     : ', args.fps)

@@ -23,6 +23,10 @@ poseTargetCategory = {"supercategory": "person",
                       "skeleton": [[16, 14], [14, 12], [17, 15], [15, 13], [12, 13], [6, 8], [7, 9], [8, 10],
                                    [9, 11], [2, 3], [1, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 7], [18, 1],
                                    [18, 6], [18, 7], [18, 12], [18, 13]]}
+
+num_parts = len(poseTargetCategory['keypoints'])
+num_links = len(poseTargetCategory['skeleton'])
+
 '''
  with open(annotations_file, 'r') as f:
             data = json.load(f)
@@ -41,12 +45,12 @@ drawing = DrawObjects(topology)
 
 def postProcessBatch(batch, originalImgs):
     res = []
-    for k in range(batch.shape[0]):
-        cmap, paf = batch[k]
-        object_counts, objects, peaks = postProcessing(cmap, paf)
-        object_counts, objects, peaks = int(object_counts[0]), objects[0], peaks[0]
-
-        res.append(drawing(originalImgs[k], object_counts, objects, peaks))
+    cmaps, pafs = batch
+    for k in range(batch[0].size(dim=0)):
+        object_counts, objects, peaks = postProcessing(cmaps[k][None,:], pafs[None,:])
+        im = np.array(originalImgs[k])
+        drawing(im, object_counts, objects, peaks)
+        res.append(im)
     return np.array(res)
 
 def get_child_subgraph_dpu(graph: "Graph") -> List["Subgraph"]:
