@@ -44,7 +44,9 @@ class RunningThread (threading.Thread):
         else: # Pytorch
             # Processing with pytorch:
             # model = models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
+            # model = models.resnet18_baseline_att(num_parts, 2 * num_links).eval()
             model = models.resnet18_baseline_att(num_parts, 2 * num_links).eval()
+            # model = models.densenet121_baseline_att(num_parts, 2 * num_links).eval()
             MODEL_WEIGHTS = self.modelFile
             model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=torch.device('cpu')))
             middleBatch = model(inputBatch)

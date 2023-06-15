@@ -10,6 +10,7 @@ from trt_pose.coco import coco_category_to_topology
 # https://github.com/Hematies/trt_pose/blob/master/trt_pose/coco.py
 preprocessingTransforms = torchvision.transforms.Compose([
             torchvision.transforms.ToTensor(),
+            torchvision.transforms.Resize((224,224)),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
 
