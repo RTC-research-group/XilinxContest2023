@@ -38,7 +38,7 @@ VERSION=latest
 
 CPU_IMAGE_TAG=${DOCKER_REPO}${BRAND}-cpu:${VERSION}
 GPU_IMAGE_TAG=${DOCKER_REPO}${BRAND}-gpu:${VERSION}
-IMAGE_NAME="drallert/vitis-ai-xcontest2023:2.1"
+IMAGE_NAME="drallert/vitis-ai-xcontest2023:1.4"
 DEFAULT_COMMAND="bash"
 
 if [[ $# -gt 0 ]]; then
@@ -104,6 +104,7 @@ docker_run_params=$(cat <<-END
     -v $HERE:/workspace \
     -w /workspace \
     --rm \
+    --gpus all \
     --network=host \
     ${DETACHED} \
     ${RUN_MODE} \
