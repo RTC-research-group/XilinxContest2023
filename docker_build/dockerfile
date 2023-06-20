@@ -1,6 +1,6 @@
 #FROM nvidia/cuda12.1.1-cudnn8-devel-ubuntu22.04
 
-FROM xilinx/vitis-ai:2.0
+FROM xilinx/vitis-ai:1.4.1.978
 
 
 
