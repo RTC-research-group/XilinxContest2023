@@ -11,6 +11,8 @@ from Processing import preprocessingTransforms, postProcessBatch, \
 import torch
 from torchsummary import summary
 
+from ModelSplitting import *
+
 extensionFramework = {
     ".xmodel": "vitisai",
     ".pth": "pytorch",
@@ -45,16 +47,18 @@ class RunningThread (threading.Thread):
             middleBatch = runDPU(inputBatch, self.dpuRunner)
         else: # Pytorch
             # Processing with pytorch:
-            # model = models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
             # model = models.resnet18_baseline_att(num_parts, 2 * num_links).eval()
-            model = models.resnet18_baseline_att(num_parts, 2 * num_links).eval()
-            # model = models.densenet121_baseline_att(num_parts, 2 * num_links).eval()
-            MODEL_WEIGHTS = self.modelFile
-            model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=torch.device('cpu')))
+            dpuModel = buildDpuModel().eval()
+            cpuModel = buildCpuModel(num_parts, 2 * num_links).eval()
+            dpuWeights, cpuWeights = splitWeightsMatrix(self.modelFile)
+            # model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=torch.device('cpu')))
+            dpuModel.load_state_dict(dpuWeights)
+            cpuModel.load_state_dict(cpuWeights)
 
             # summary(model, inputBatch[0].size())
 
-            middleBatch = model(inputBatch)
+            middleBatch_ = dpuModel(inputBatch)
+            middleBatch = cpuModel(middleBatch_)
 
         # Post-processing:
         # outputBatch = postProcessing(*middleBatch)
