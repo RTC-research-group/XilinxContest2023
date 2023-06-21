@@ -65,14 +65,17 @@ class CmapPafHeadAttention(torch.nn.Module):
             
         self.cmap_conv = torch.nn.Conv2d(upsample_channels, cmap_channels, kernel_size=1, stride=1, padding=0)
         self.paf_conv = torch.nn.Conv2d(upsample_channels, paf_channels, kernel_size=1, stride=1, padding=0)
-    
+
     def forward(self, x):
         xc = self.cmap_up(x)
-        ac = torch.sigmoid(self.cmap_att(xc))
-        
         xp = self.paf_up(x)
+        ac = torch.sigmoid(self.cmap_att(xc))
+
+        # From here, the operations are not compatible with the DPU:
         ap = torch.tanh(self.paf_att(xp))
-        
-        return self.cmap_conv(xc * ac), self.paf_conv(xp * ap)
+        mulCmap = xc * ac
+        mulPaf = xp * ap
+
+        return self.cmap_conv(mulCmap), self.paf_conv(mulPaf)
     
     

@@ -3,11 +3,13 @@ import threading
 from time import sleep, time
 import cv2
 import numpy as np
+from tensorboard import summary
 
 from trt_pose import models
 from Processing import preprocessingTransforms, postProcessBatch, \
     get_child_subgraph_dpu, runDPU, postProcessing, num_parts, num_links
 import torch
+from torchsummary import summary
 
 extensionFramework = {
     ".xmodel": "vitisai",
@@ -49,6 +51,9 @@ class RunningThread (threading.Thread):
             # model = models.densenet121_baseline_att(num_parts, 2 * num_links).eval()
             MODEL_WEIGHTS = self.modelFile
             model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=torch.device('cpu')))
+
+            # summary(model, inputBatch[0].size())
+
             middleBatch = model(inputBatch)
 
         # Post-processing:
