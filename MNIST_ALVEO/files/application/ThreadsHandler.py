@@ -7,7 +7,7 @@ from tensorboard import summary
 
 from trt_pose import models
 from Processing import preprocessingTransforms, postProcessBatch, \
-    get_child_subgraph_dpu, runDPU, postProcessing, num_parts, num_links
+    get_child_subgraph_dpu, runMultipleDPU, postProcessing, num_parts, num_links
 import torch
 from torchsummary import summary
 
@@ -20,14 +20,14 @@ extensionFramework = {
 class RunningThread (threading.Thread):
     def __init__(self, handler, slot: int, inputBatch,
                  # framework: str,
-                 dpuRunner = None, modelFile = None):
+                 dpuRunners = None, modelFile = None):
         threading.Thread.__init__(self)
 
-        assert not((dpuRunner is None) and (modelFile is None))
+        assert not((dpuRunners is None) and (modelFile is None))
         self.handler = handler
         self.slot = slot
         # self.framework = framework
-        self.dpuRunner = dpuRunner
+        self.dpuRunners = dpuRunners
         self.modelFile = modelFile
         self.inputBatch = inputBatch
 
@@ -40,9 +40,20 @@ class RunningThread (threading.Thread):
             inputBatch.append(preprocessingTransforms(img)[None, :])
         inputBatch = torch.cat(inputBatch)
 
-        if self.dpuRunner != None:
+        if self.dpuRunners != None:
             # DPU processing:
-            middleBatch = runDPU(inputBatch, self.dpuRunner)
+            if len(self.dpuRunners) == 1:
+                middleBatch = runMultipleDPU(inputBatch, self.dpuRunners, outputs = [0], orientedEdges = [(-1,0)])
+            elif len(self.dpuRunners) == 3: # Nuestro caso
+                middleBatch = runMultipleDPU(inputBatch, self.dpuRunners, outputs=[1,2],
+                                             orientedEdges=[(-1, 0), (0, 1), (0, 2)])
+            else:
+                edges = [(-1,0)]
+                for i in range(len(self.dpuRunners) - 1):
+                    edges.append((i, i+1))
+                middleBatch = runMultipleDPU(inputBatch, self.dpuRunners, outputs=[len(self.dpuRunners) - 1],
+                                             orientedEdges=edges)
+
         else: # Pytorch
             # Processing with pytorch:
             # model = models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
@@ -119,7 +130,10 @@ class ThreadsHandler:
             subgraphs = get_child_subgraph_dpu(g)
             self.dpuRunners = []
             for i in range(maxNumThreads):
-                self.dpuRunners.append(vart.Runner.create_runner(subgraphs[0], "run"))
+                runners = []
+                for j in range(0, len(subgraphs)):
+                    runners.append(vart.Runner.create_runner(subgraphs[j], "run"))
+                self.dpuRunners.append(runners)
         # elif extension == 'pytorch':
         else:
             # self.model = trt_pose.models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
@@ -160,7 +174,7 @@ class ThreadsHandler:
             assert self.areQueuesFull(blocking=False)
         slot = self.firstEmptySlot
         if self.framework == 'vitisai':
-            self.threadsQueue[slot] = RunningThread(self, slot, inputBatch, dpuRunner=self.dpuRunners[slot])
+            self.threadsQueue[slot] = RunningThread(self, slot, inputBatch, dpuRunners=self.dpuRunners[slot])
         else:
             self.threadsQueue[slot] = RunningThread(self, slot, inputBatch, modelFile=self.model)
         self.outputBatchesQueue[slot] = None

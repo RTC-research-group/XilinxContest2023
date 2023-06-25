@@ -68,16 +68,23 @@ def get_child_subgraph_dpu(graph: "Graph") -> List["Subgraph"]:
         if cs.has_attr("device") and cs.get_attr("device").upper() == "DPU"
     ]
 
+def runMultipleDPU(inputBatch, dpuRunners, outputs = [0], orientedEdges = [(-1,0)]):
+    intermediaryData = {-1: inputBatch}
+    for origin, destination in orientedEdges:
+        intermediaryData[destination] = runDPU(intermediaryData[origin], dpuRunners[destination])
+    res = []
+    for k in outputs:
+        res.append(intermediaryData[k])
+    return res
+
+
+
 def runDPU(inputBatch, dpuRunner):
     '''get tensor'''
     inputTensors = dpuRunner.get_input_tensors()
     outputTensors = dpuRunner.get_output_tensors()
     input_ndim = tuple(inputTensors[0].dims)
     output_ndim = tuple(outputTensors[0].dims)
-
-    # we can avoid output scaling if use argmax instead of softmax
-    # output_fixpos = outputTensors[0].get_attr("fix_point")
-    # output_scale = 1 / (2**output_fixpos)
 
     batchSize = input_ndim[0]
     n_of_images = len(inputBatch)
