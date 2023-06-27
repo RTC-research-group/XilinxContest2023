@@ -56,8 +56,8 @@ def app(source: str, threads: int, modelFile: str, targetFPS: int, batchSize: in
 def main():
     # construct the argument parser and parse the arguments
     ap = argparse.ArgumentParser()
-    ap.add_argument('-s', '--source', type=str, default='0', help='Input video device ID or path to video. Default is 0 (webcam)')
-    # ap.add_argument('-s', '--source', type=str, default='video.mp4',help='Input video device ID or path to video. Default is 0 (webcam)')
+    # ap.add_argument('-s', '--source', type=str, default='0', help='Input video device ID or path to video. Default is 0 (webcam)')
+    ap.add_argument('-s', '--source', type=str, default='video.mp4',help='Input video device ID or path to video. Default is 0 (webcam)')
     ap.add_argument('-t', '--threads', type=int, default=1, help='Number of threads. Default is 1')
     # ap.add_argument('-m', '--model', type=str, default='../../../vitis/compiled_pytorch_xmodel/Sequential_int.xmodel',
     #                help='Path of xmodel. Default is ../../../vitis/compiled_pytorch_xmodel/Sequential_int.xmodel')

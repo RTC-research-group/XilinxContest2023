@@ -1,34 +1,75 @@
+import os
 import threading
 from time import sleep, time
 import cv2
-import torchvision
-from PIL import Image
 import numpy as np
+from tensorboard import summary
 
-import vart
-import xir
+from trt_pose import models
+from Processing import preprocessingTransforms, postProcessBatch, \
+    get_child_subgraph_dpu, runMultipleDPU, postProcessing, num_parts, num_links
+import torch
+from torchsummary import summary
 
-from Processing import preprocessingTransforms, get_child_subgraph_dpu, runDPU, postProcessing
+extensionFramework = {
+    ".xmodel": "vitisai",
+    ".pth": "pytorch",
+    ".onnx": "pytorch"
+}
 
 class RunningThread (threading.Thread):
-    def __init__(self, handler, slot: int, inputBatch, dpuRunner):
+    def __init__(self, handler, slot: int, inputBatch,
+                 # framework: str,
+                 dpuRunners = None, modelFile = None):
         threading.Thread.__init__(self)
+
+        assert not((dpuRunners is None) and (modelFile is None))
         self.handler = handler
         self.slot = slot
-        self.dpuRunner = dpuRunner
+        # self.framework = framework
+        self.dpuRunners = dpuRunners
+        self.modelFile = modelFile
         self.inputBatch = inputBatch
 
     def run(self):
         outputBatch = None
 
         # Pre-processing:
-        inputBatch = preprocessingTransforms(self.inputBatch)
+        inputBatch = []
+        for img in self.inputBatch:
+            inputBatch.append(preprocessingTransforms(img)[None, :])
+        inputBatch = torch.cat(inputBatch)
 
-        # DPU processing:
-        middleBatch = runDPU(inputBatch, self.dpuRunner)
+        if self.dpuRunners != None:
+            # DPU processing:
+            if len(self.dpuRunners) == 1:
+                middleBatch = runMultipleDPU(inputBatch, self.dpuRunners, outputs = [0], orientedEdges = [(-1,0)])
+            elif len(self.dpuRunners) == 3: # Nuestro caso
+                middleBatch = runMultipleDPU(inputBatch, self.dpuRunners, outputs=[1,2],
+                                             orientedEdges=[(-1, 0), (0, 1), (0, 2)])
+            else:
+                edges = [(-1,0)]
+                for i in range(len(self.dpuRunners) - 1):
+                    edges.append((i, i+1))
+                middleBatch = runMultipleDPU(inputBatch, self.dpuRunners, outputs=[len(self.dpuRunners) - 1],
+                                             orientedEdges=edges)
+
+        else: # Pytorch
+            # Processing with pytorch:
+            # model = models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
+            # model = models.resnet18_baseline_att(num_parts, 2 * num_links).eval()
+            model = models.resnet18_baseline_att(num_parts, 2 * num_links).eval()
+            # model = models.densenet121_baseline_att(num_parts, 2 * num_links).eval()
+            MODEL_WEIGHTS = self.modelFile
+            model.load_state_dict(torch.load(MODEL_WEIGHTS, map_location=torch.device('cpu')))
+
+            # summary(model, inputBatch[0].size())
+
+            middleBatch = model(inputBatch)
 
         # Post-processing:
-        outputBatch = postProcessing(middleBatch, self.inputBatch)
+        # outputBatch = postProcessing(*middleBatch)
+        outputBatch = postProcessBatch(middleBatch, self.inputBatch)
 
         self.handler.writeOutputBatch(self.slot, outputBatch)
 
@@ -37,27 +78,28 @@ class DisplayThread (threading.Thread):
         threading.Thread.__init__(self)
         self.handler = handler
         self.targetFPS = targetFPS
-        self.lastTimestamp = round(time.time() * 1000)
+        self.lastTimestamp = round(time() * 1000)
 
     def display(self, batch):
         targetPeriod = (1.0 / float(self.targetFPS)) * 1000.0
         for k in range(0, batch.shape[0]):
-            currentTimestamp = round(time.time() * 1000)
+            currentTimestamp = round(time() * 1000)
             diff = currentTimestamp - self.lastTimestamp
-
             waitTime = 0 if diff >= targetPeriod else targetPeriod - diff
             if waitTime > 0:
-                sleep(waitTime)
-
+                sleep(waitTime / 1000)
             cv2.imshow("Output", batch[k])
-            self.lastTimestamp = round(time.time() * 1000)
+            cv2.waitKey(1)
+            print('Frame de salida ', k, ' (', int(waitTime), ')')
+            self.lastTimestamp = round(time() * 1000)
 
     def run(self):
         while True:
             busySlot = self.handler.getFirstBusySlot()
             self.handler.outputWrittenEvents[busySlot].wait()
-
+            self.handler.lock.acquire()
             batch = self.handler.outputBatchesQueue[busySlot]
+            self.handler.lock.release()
             self.display(batch)
 
             self.handler.deallocateSlot()
@@ -80,11 +122,23 @@ class ThreadsHandler:
 
         self.lock = threading.Lock()
 
-        g = xir.Graph.deserialize(model)
-        subgraphs = get_child_subgraph_dpu(g)
-        self.dpuRunners = []
-        for i in range(maxNumThreads):
-            self.dpuRunners.append(vart.Runner.create_runner(subgraphs[0], "run"))
+        extension = os.path.splitext(model)[1]
+        assert extension in extensionFramework
+        self.framework = extensionFramework[extension]
+        if extensionFramework[extension] == 'vitisai':
+            g = xir.Graph.deserialize(model)
+            subgraphs = get_child_subgraph_dpu(g)
+            self.dpuRunners = []
+            for i in range(maxNumThreads):
+                runners = []
+                for j in range(0, len(subgraphs)):
+                    runners.append(vart.Runner.create_runner(subgraphs[j], "run"))
+                self.dpuRunners.append(runners)
+        # elif extension == 'pytorch':
+        else:
+            # self.model = trt_pose.models.resnet18_baseline_att(num_parts, 2 * num_links).cuda().eval()
+            self.model = model
+
 
     def getFirstBusySlot(self):
         self.lock.acquire()
@@ -103,9 +157,11 @@ class ThreadsHandler:
         self.lock.acquire()
         # We write the batch:
         self.outputBatchesQueue[slot] = batch
-        self.outputWrittenEvents[slot].set()
+
         # We free the handler:
         self.lock.release()
+
+        self.outputWrittenEvents[slot].set()
 
     def allocateSlot(self, inputBatch, waitForSpace=True):
         if waitForSpace:
@@ -117,10 +173,13 @@ class ThreadsHandler:
         if not waitForSpace:
             assert self.areQueuesFull(blocking=False)
         slot = self.firstEmptySlot
-        self.threadsQueue[slot] = RunningThread(slot, inputBatch, self.dpuRunners[slot])
+        if self.framework == 'vitisai':
+            self.threadsQueue[slot] = RunningThread(self, slot, inputBatch, dpuRunners=self.dpuRunners[slot])
+        else:
+            self.threadsQueue[slot] = RunningThread(self, slot, inputBatch, modelFile=self.model)
         self.outputBatchesQueue[slot] = None
         self.numRunningThreads = self.numRunningThreads + 1
-        if self.firstEmptySlot >= self.maxNumThreads:
+        if self.firstEmptySlot >= (self.maxNumThreads - 1):
             self.firstEmptySlot = 0
         else:
             self.firstEmptySlot = self.firstEmptySlot + 1
@@ -134,10 +193,11 @@ class ThreadsHandler:
         self.lock.acquire()
         assert not self.areQueuesEmpty(blocking=False)
         slot = self.firstBusySlot
+        self.outputWrittenEvents[slot].clear()
         self.threadsQueue[slot].join()
         self.threadsQueue[slot] = None
         self.numRunningThreads = self.numRunningThreads - 1
-        if self.firstBusySlot >= self.maxNumThreads:
+        if self.firstBusySlot >= (self.maxNumThreads - 1):
             self.firstBusySlot = 0
         else:
             self.firstBusySlot = self.firstBusySlot + 1
@@ -145,8 +205,6 @@ class ThreadsHandler:
 
         if self.numRunningThreads == (self.maxNumThreads - 1):
             self.queuesAreJustNotFullEvent.set()
-
-        self.outputWrittenEvents[slot].clear()
 
         self.lock.release()
 
@@ -160,14 +218,17 @@ class ThreadsHandler:
         numRunningThreads = self.numRunningThreads
         if blocking:
             self.lock.release()
-        return numRunningThreads == 0 # and (self.firstEmptySlot == self.firstBusySlot)
+        return numRunningThreads <= 0 # and (self.firstEmptySlot == self.firstBusySlot)
 
     def areQueuesFull(self, blocking=True):
         if blocking:
             self.lock.acquire()
         numRunningThreads = self.numRunningThreads
+        res = numRunningThreads >= self.maxNumThreads
+        if res:
+            self.queuesAreJustNotFullEvent.clear()
         if blocking:
             self.lock.release()
-        return numRunningThreads == self.maxNumThreads # and (self.firstEmptySlot == self.firstBusySlot)
+        return res # and (self.firstEmptySlot == self.firstBusySlot)
 
 
