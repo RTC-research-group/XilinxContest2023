@@ -71,9 +71,9 @@ do
 done
 
 DOCKER_RUN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-if [ "$HERE" != "$DOCKER_RUN_DIR" ]; then
-  echo "WARNING: Please start 'docker_run.sh' from the Vitis-AI/ source directory";
-fi
+# if [ "$HERE" != "$DOCKER_RUN_DIR" ]; then
+#   echo "WARNING: Please start 'docker_run.sh' from the Vitis-AI/ source directory";
+# fi
 
 
 
@@ -109,7 +109,7 @@ docker_run_params=$(cat <<-END
     ${DETACHED} \
     ${RUN_MODE} \
     $IMAGE_NAME \
-    $DEFAULT_COMMAND
+    $DEFAULT_COMMAND 
 END
 )
 
