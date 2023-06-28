@@ -1,4 +1,4 @@
 #!/bin/bash
 
 mkdir compile_result
-python3 compile/vai_c_xir_cust_pytorch.py -x quantize_result/Sequential_int.xmodel -a $1 -o compile_result -n trt_pose
+python3 compile/vai_c_xir_cust_pytorch.py -x quantize_result/Sequential_int.xmodel -a /opt/vitis_ai/compiler/arch/DPUCAHX8H/U280/arch.json -o compile_result -n trt_pose
