@@ -1,1 +1,5 @@
-compile/MNIST_ALVEO
+trt_pose/preprocess_coco/val2017
+trt_pose/preprocess_coco/annotations
+trt_pose/preprocess_coco/annotations_trainval2017.zip
+trt_pose/preprocess_coco/val2017.zip
+
