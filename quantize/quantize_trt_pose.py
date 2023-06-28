@@ -13,6 +13,8 @@ import torchvision.transforms as transforms
 from torchvision.models.resnet import resnet18
 from tqdm import tqdm
 from trt_pose.coco import CocoDataset, CocoHumanPoseEval
+from argparse import ArgumentParser
+
 def cmap_paf_loss(cmap,cmap_out,paf,paf_out,mask):
   cmap_mse = torch.mean(mask * (cmap_out - cmap)**2)
   paf_mse = torch.mean(mask * (paf_out - paf)**2)
@@ -86,10 +88,9 @@ def create_torch_model(MODEL_WEIGHTS,v=False):
     return model
 
 
-#device = torch.device("cuda")
+device = torch.device("cpu")
 #device = torch.device("cpu")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
